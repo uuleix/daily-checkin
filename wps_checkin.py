@@ -9,8 +9,9 @@ from playwright.sync_api import sync_playwright
 from common import cookie_path
 
 COOKIE_PATH = cookie_path()
-LOG_PATH = "/home/lingxi/workspace/wps_checkin_log.txt"
-RESULT_PATH = "/home/lingxi/workspace/wps_checkin_last.txt"
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+LOG_PATH = os.path.join(BASE_DIR, "wps_checkin_log.txt")
+RESULT_PATH = os.path.join(BASE_DIR, "wps_checkin_last.txt")
 # 任务中心稳定地址：依赖子路径 page_number，不依赖 mk_key 签名参数
 URL = (
     "https://personal-act.wps.cn/rubik2/portal/"
