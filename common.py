@@ -3,6 +3,7 @@
 import base64
 import gzip
 import os
+import re
 
 BASE = os.path.dirname(os.path.abspath(__file__))
 COOKIE_FILE = os.path.join(BASE, "lingxi_cookies.json")
@@ -15,7 +16,11 @@ def cookie_path():
     环境变量 LINGXI_COOKIES_GZ_B64 存放 gzip+base64 编码的 Cookie JSON，
     适用于 GitHub Actions Secrets；未设置时回退本地文件。
     """
-    b64 = os.environ.get("LINGXI_COOKIES_GZ_B64", "").strip()
+    b64 = os.environ.get("LINGXI_COOKIES_GZ_B64", "")
+    # 消毒：从聊天/网页复制时极易混入零宽空格、BOM、不间断空格、换行等，
+    # 这些会让 base64.b64decode 抛 "string argument should contain only ASCII characters"。
+    # 只保留 base64 合法字符，彻底免疫粘贴污染。
+    b64 = re.sub(r"[^A-Za-z0-9+/=]", "", b64)
     if not b64:
         return COOKIE_FILE
 
