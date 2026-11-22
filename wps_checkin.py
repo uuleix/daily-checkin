@@ -40,10 +40,12 @@ def main():
         ctx = browser.new_context(
             viewport={"width": 1280, "height": 900},
             user_agent=(
-                "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
+                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
                 "AppleWebKit/537.36 (KHTML, like Gecko) "
                 "Chrome/120.0.0.0 Safari/537.36"
             ),
+            timezone_id="Asia/Shanghai",
+            locale="zh-CN",
         )
         ctx.add_cookies(cookies)
         page = ctx.new_page()
@@ -59,16 +61,23 @@ def main():
                 log(f"FAIL: 打开任务中心失败 {exc2}")
                 browser.close()
                 return 4
-        # 轮询等待核心内容出现
+        # 轮询等待核心内容出现（给海外 IP 留足时间，最长 70 秒）
         loaded = False
-        for _ in range(10):
+        for _ in range(35):
             page.wait_for_timeout(2000)
-            body = page.locator("body").inner_text()
-            if "已连续签到" in body or "退出" in body or "我的积分" in body:
+            try:
+                body = page.locator("body").inner_text()
+            except Exception:
+                body = ""
+            if "已连续签到" in body or "退出" in body or "我的积分" in body or "点击签到" in body:
                 loaded = True
                 break
         if not loaded:
-            log("FAIL: 页面加载超时，未见签到区域")
+            log("FAIL: 页面加载超时(70s)，未见签到区域")
+            try:
+                page.screenshot(path=os.path.join(BASE_DIR, "wps_fail.png"), full_page=True)
+            except Exception:
+                pass
             browser.close()
             return 4
 
