@@ -47,20 +47,47 @@ def main():
         ctx.add_cookies(cookies)
         page = ctx.new_page()
 
+        # 打开页面：用 domcontentloaded + 轮询等待，避免 networkidle 在美国 IP 下超时
         try:
-            page.goto(URL, wait_until="networkidle", timeout=40000)
-            page.wait_for_timeout(3000)
+            page.goto(URL, wait_until="domcontentloaded", timeout=30000)
         except Exception as exc:
-            log(f"FAIL: 打开任务中心失败 {exc}")
+            log(f"WARN: 首次打开失败，重试: {exc}")
+            try:
+                page.goto(URL, wait_until="domcontentloaded", timeout=30000)
+            except Exception as exc2:
+                log(f"FAIL: 打开任务中心失败 {exc2}")
+                browser.close()
+                return 4
+        # 轮询等待核心内容出现
+        loaded = False
+        for _ in range(10):
+            page.wait_for_timeout(2000)
+            body = page.locator("body").inner_text()
+            if "已连续签到" in body or "退出" in body or "我的积分" in body:
+                loaded = True
+                break
+        if not loaded:
+            log("FAIL: 页面加载超时，未见签到区域")
             browser.close()
             return 4
 
         body = page.locator("body").inner_text()
 
-        if "退出" not in body and "Hi，" not in body:
-            log("NEED_RELOGIN: 任务中心未显示登录账号")
+        # 登录态判断：真正跳去登录页/有登录按钮才算失效；否则视为已登录
+        login_form = page.evaluate(
+            r"""() => {
+              const btn = Array.from(document.querySelectorAll('button'))
+                .find(b => (b.innerText || '').trim() === '登录' && b.offsetWidth > 0);
+              const url = location.href;
+              return { hasLoginBtn: !!btn, isLoginUrl: /login|passport|account/.test(url) };
+            }"""
+        )
+        if login_form["isLoginUrl"] or (login_form["hasLoginBtn"] and "退出" not in body and "Hi，" not in body):
+            log(f"NEED_RELOGIN: 跳转到登录页 (hasLoginBtn={login_form['hasLoginBtn']}, url={login_form['isLoginUrl']})")
             browser.close()
             return 3
+
+        log(f"DEBUG: 页面已登录，含退出={('退出' in body)}, 含Hi={('Hi，' in body)}")
 
         # 已签到：出现「提醒我签到」或「已签到」，且没有可点的「签到」按钮
         clickable = page.evaluate(
