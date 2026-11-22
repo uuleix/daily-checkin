@@ -1,0 +1,23 @@
+# ===== 绝对不能提交的敏感文件 =====
+lingxi_cookies.json
+.cookies_from_secret.json
+serverchan.conf
+
+# ===== 本地一次性工具（依赖本机浏览器技能，CI 不需要） =====
+lingxi_login_once.py
+
+# ===== 运行产物 / 日志 / 状态 =====
+*.log
+*_log.txt
+*_last.txt
+*_status.txt
+*_status.json
+lingxi_relogin_required.txt
+lingxi_scheduler.pid
+
+# ===== 截图与临时文件 =====
+*.png
+*.jpg
+*.pyc
+__pycache__/
+.DS_Store
