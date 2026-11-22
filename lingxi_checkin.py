@@ -146,6 +146,8 @@ if __name__ == "__main__":
         sys.exit(main())
     except SystemExit:
         raise
-    except Exception as exc:
-        log(f"ERROR: {exc}")
+    except Exception:
+        import traceback
+        tb = traceback.format_exc()
+        log(f"ERROR: {tb}")
         sys.exit(1)
