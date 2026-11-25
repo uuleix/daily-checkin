@@ -17,7 +17,6 @@ STATUS_PATH = os.path.join(BASE, "daily_checkin_status.json")
 # (任务名, 脚本文件)
 TASKS = [
     ("灵犀", "lingxi_checkin.py"),
-    ("WPS会员", "wps_checkin.py"),
 ]
 
 
